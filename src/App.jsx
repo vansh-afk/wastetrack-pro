@@ -176,10 +176,6 @@ function Dashboard({ session, onLogout }) {
   const [modalType, setModalType] = useState('')
   const [selectedItem, setSelectedItem] = useState(null)
   
-  // Filter states
-  const [filterText, setFilterText] = useState('')
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  
   // Form states
   const [newTransfer, setNewTransfer] = useState({
     customer: '',
@@ -213,7 +209,6 @@ function Dashboard({ session, onLogout }) {
     type: 'PDF'
   })
 
-  // Edit form states
   const [editCompany, setEditCompany] = useState({ ...companyData })
 
   // Load data on component mount
@@ -226,7 +221,6 @@ function Dashboard({ session, onLogout }) {
   const loadCompanyData = async () => {
     setLoading(true)
     
-    // Get company ID and data
     const { data: company } = await supabase
       .from('companies')
       .select('*')
@@ -248,7 +242,6 @@ function Dashboard({ session, onLogout }) {
         address: company.address || '123 High Street, London'
       })
       
-      // Load all data
       await Promise.all([
         fetchTransfers(company.id),
         fetchDrivers(company.id),
@@ -267,13 +260,8 @@ function Dashboard({ session, onLogout }) {
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching transfers:', error)
-    } else if (data && data.length > 0) {
+    if (!error && data) {
       setTransfers(data)
-    } else {
-      // Load sample data if no data exists
-      await loadSampleTransfers(companyId)
     }
   }
 
@@ -283,12 +271,8 @@ function Dashboard({ session, onLogout }) {
       .select('*')
       .eq('company_id', companyId)
 
-    if (error) {
-      console.error('Error fetching drivers:', error)
-    } else if (data && data.length > 0) {
+    if (!error && data) {
       setDrivers(data)
-    } else {
-      await loadSampleDrivers(companyId)
     }
   }
 
@@ -298,12 +282,8 @@ function Dashboard({ session, onLogout }) {
       .select('*')
       .eq('company_id', companyId)
 
-    if (error) {
-      console.error('Error fetching customers:', error)
-    } else if (data && data.length > 0) {
+    if (!error && data) {
       setCustomers(data)
-    } else {
-      await loadSampleCustomers(companyId)
     }
   }
 
@@ -313,105 +293,74 @@ function Dashboard({ session, onLogout }) {
       .select('*')
       .eq('company_id', companyId)
 
-    if (error) {
-      console.error('Error fetching reports:', error)
-    } else if (data && data.length > 0) {
-      setReports(data)
-    } else {
-      await loadSampleReports(companyId)
-    }
-  }
-
-  const loadSampleTransfers = async (companyId) => {
-    const sampleData = [
-      { company_id: companyId, wtn_number: 'MTN-2026-004782', customer: 'ABC Construction Ltd', driver: 'John Smith', waste_type: '17.01.01 - Concrete', quantity: 8, unit: 'tonnes', time: '14:32', status: 'completed', date: '2026-03-18' },
-      { company_id: companyId, wtn_number: 'MTN-2026-004783', customer: 'Green Waste Recycling', driver: 'Sarah Jones', waste_type: '20.03.01 - Mixed Waste', quantity: 3.5, unit: 'tonnes', time: '11:15', status: 'completed', date: '2026-03-18' },
-      { company_id: companyId, wtn_number: 'MTN-2026-004784', customer: 'City Demolition Ltd', driver: 'Mike Brown', waste_type: '17.09.04 - Construction Waste', quantity: 12, unit: 'tonnes', time: '09:45', status: 'completed', date: '2026-03-18' }
-    ]
-
-    const { data, error } = await supabase
-      .from('waste_transfers')
-      .insert(sampleData)
-      .select()
-
-    if (!error && data) {
-      setTransfers(data)
-    }
-  }
-
-  const loadSampleDrivers = async (companyId) => {
-    const sampleData = [
-      { company_id: companyId, name: 'John Smith', email: 'john@example.com', phone: '07700 123456', status: 'online', vehicle: 'Truck 01' },
-      { company_id: companyId, name: 'Sarah Jones', email: 'sarah@example.com', phone: '07700 123457', status: 'online', vehicle: 'Truck 02' },
-      { company_id: companyId, name: 'Mike Brown', email: 'mike@example.com', phone: '07700 123458', status: 'offline', vehicle: 'Truck 03' }
-    ]
-
-    const { data, error } = await supabase
-      .from('drivers')
-      .insert(sampleData)
-      .select()
-
-    if (!error && data) {
-      setDrivers(data)
-    }
-  }
-
-  const loadSampleCustomers = async (companyId) => {
-    const sampleData = [
-      { company_id: companyId, name: 'ABC Construction Ltd', email: 'billing@abcconstruction.com', phone: '020 1234 5678', address: '123 High Street, London', total_transfers: 45 },
-      { company_id: companyId, name: 'Green Waste Recycling', email: 'info@greenwaste.com', phone: '020 8765 4321', address: '456 Industrial Estate, Manchester', total_transfers: 32 },
-      { company_id: companyId, name: 'City Demolition Ltd', email: 'projects@citydemo.com', phone: '020 2468 1357', address: '789 Site Road, Birmingham', total_transfers: 28 }
-    ]
-
-    const { data, error } = await supabase
-      .from('customers')
-      .insert(sampleData)
-      .select()
-
-    if (!error && data) {
-      setCustomers(data)
-    }
-  }
-
-  const loadSampleReports = async (companyId) => {
-    const sampleData = [
-      { company_id: companyId, name: 'Monthly Compliance Report', date: 'March 2026', status: 'ready', type: 'PDF' },
-      { company_id: companyId, name: 'Waste Transfer Summary', date: 'Q1 2026', status: 'generating', type: 'Excel' },
-      { company_id: companyId, name: 'Driver Activity Log', date: 'Last 30 days', status: 'ready', type: 'PDF' }
-    ]
-
-    const { data, error } = await supabase
-      .from('reports')
-      .insert(sampleData)
-      .select()
-
     if (!error && data) {
       setReports(data)
     }
   }
 
-  // Handle Add New Transfer
+  // ========== MODAL OPEN FUNCTIONS ==========
+  const openAddModal = (type) => {
+    setModalType(type)
+    setShowAddModal(true)
+    
+    // Reset forms
+    if (type === 'transfer') {
+      setNewTransfer({
+        customer: '',
+        driver: '',
+        waste_type: '',
+        ewc_code: '17.01.01',
+        quantity: '',
+        unit: 'tonnes',
+        status: 'pending'
+      })
+    } else if (type === 'driver') {
+      setNewDriver({
+        name: '',
+        email: '',
+        phone: '',
+        vehicle: '',
+        status: 'online'
+      })
+    } else if (type === 'customer') {
+      setNewCustomer({
+        name: '',
+        email: '',
+        phone: '',
+        address: ''
+      })
+    } else if (type === 'report') {
+      setNewReport({
+        name: '',
+        date: new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+        status: 'pending',
+        type: 'PDF'
+      })
+    }
+  }
+
+  // ========== HANDLE ADD NEW TRANSFER ==========
   const handleAddTransfer = async () => {
     try {
-      if (!companyId) {
-        throw new Error('Company not found')
-      }
+      if (!companyId) throw new Error('Company not found')
 
       const now = new Date()
       const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
       const dateString = now.toISOString().split('T')[0]
       
-      // Generate WTN number properly
-      const lastWtn = transfers.length > 0 
-        ? Math.max(...transfers.map(t => {
-            const match = t.wtn_number?.match(/\d+$/)
-            return match ? parseInt(match[0]) : 4781
-          })) 
-        : 4781
+      // Generate WTN number
+      let lastNum = 4781
+      if (transfers.length > 0) {
+        const numbers = transfers.map(t => {
+          const parts = t.wtn_number?.split('-')
+          return parts?.length === 3 ? parseInt(parts[2]) : 0
+        })
+        lastNum = Math.max(...numbers, 4781)
+      }
       
       const transfer = {
         company_id: companyId,
-        wtn_number: `MTN-2026-${String(lastWtn + 1).padStart(6, '0')}`,
+        wtn_number: `MTN-2026-${(lastNum + 1).toString().padStart(6, '0')}`,
         customer: newTransfer.customer,
         driver: newTransfer.driver,
         waste_type: newTransfer.waste_type,
@@ -434,11 +383,11 @@ function Dashboard({ session, onLogout }) {
       setShowAddModal(false)
       alert('✅ New waste transfer saved to database!')
     } catch (error) {
-      alert('❌ Error saving: ' + error.message)
+      alert('❌ Error: ' + error.message)
     }
   }
 
-  // Handle Add New Driver
+  // ========== HANDLE ADD NEW DRIVER ==========
   const handleAddDriver = async () => {
     try {
       const driver = {
@@ -457,11 +406,11 @@ function Dashboard({ session, onLogout }) {
       setShowAddModal(false)
       alert('✅ New driver saved to database!')
     } catch (error) {
-      alert('❌ Error saving: ' + error.message)
+      alert('❌ Error: ' + error.message)
     }
   }
 
-  // Handle Add New Customer
+  // ========== HANDLE ADD NEW CUSTOMER ==========
   const handleAddCustomer = async () => {
     try {
       const customer = {
@@ -481,11 +430,11 @@ function Dashboard({ session, onLogout }) {
       setShowAddModal(false)
       alert('✅ New customer saved to database!')
     } catch (error) {
-      alert('❌ Error saving: ' + error.message)
+      alert('❌ Error: ' + error.message)
     }
   }
 
-  // Handle Add New Report
+  // ========== HANDLE ADD NEW REPORT ==========
   const handleAddReport = async () => {
     try {
       const report = {
@@ -504,13 +453,13 @@ function Dashboard({ session, onLogout }) {
       setShowAddModal(false)
       alert('✅ New report saved to database!')
     } catch (error) {
-      alert('❌ Error saving: ' + error.message)
+      alert('❌ Error: ' + error.message)
     }
   }
 
-  // Handle Delete
+  // ========== HANDLE DELETE ==========
   const handleDelete = async (type, id) => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return
+    if (!window.confirm(`Delete this ${type}?`)) return
 
     try {
       let table = ''
@@ -526,133 +475,25 @@ function Dashboard({ session, onLogout }) {
 
       if (error) throw error
 
-      if (type === 'transfer') {
-        setTransfers(transfers.filter(t => t.id !== id))
-      } else if (type === 'driver') {
-        setDrivers(drivers.filter(d => d.id !== id))
-      } else if (type === 'customer') {
-        setCustomers(customers.filter(c => c.id !== id))
-      } else if (type === 'report') {
-        setReports(reports.filter(r => r.id !== id))
-      }
+      if (type === 'transfer') setTransfers(transfers.filter(t => t.id !== id))
+      else if (type === 'driver') setDrivers(drivers.filter(d => d.id !== id))
+      else if (type === 'customer') setCustomers(customers.filter(c => c.id !== id))
+      else if (type === 'report') setReports(reports.filter(r => r.id !== id))
 
-      alert(`✅ ${type} deleted from database!`)
+      alert(`✅ ${type} deleted!`)
     } catch (error) {
-      alert('❌ Error deleting: ' + error.message)
+      alert('❌ Error: ' + error.message)
     }
-  }
-
-  // Handle View
-  const handleView = (type, item) => {
-    setSelectedItem(item)
-    setModalType(type)
-    setShowViewModal(true)
-  }
-
-  // Handle Edit
-  const handleEdit = (type, item) => {
-    setSelectedItem(item)
-    setModalType(type)
-    if (type === 'company') {
-      setEditCompany({ ...item })
-    }
-    setShowEditModal(true)
-  }
-
-  // Handle Save Edit
-  const handleSaveEdit = async () => {
-    try {
-      if (modalType === 'company') {
-        const { error } = await supabase
-          .from('companies')
-          .update({
-            name: editCompany.name,
-            phone: editCompany.phone,
-            address: editCompany.address
-          })
-          .eq('id', companyId)
-
-        if (error) throw error
-
-        setCompanyData({ ...editCompany })
-        alert('✅ Company details updated!')
-      }
-      setShowEditModal(false)
-    } catch (error) {
-      alert('❌ Error updating: ' + error.message)
-    }
-  }
-
-  // Handle Export
-  const handleExport = (type) => {
-    let data = []
-    let filename = ''
-    let headers = []
-
-    if (type === 'transfers') {
-      data = transfers
-      filename = 'waste_transfers.csv'
-      headers = ['WTN NUMBER', 'CUSTOMER', 'DRIVER', 'WASTE TYPE', 'QUANTITY', 'TIME', 'STATUS']
-    } else if (type === 'drivers') {
-      data = drivers
-      filename = 'drivers.csv'
-      headers = ['NAME', 'EMAIL', 'PHONE', 'VEHICLE', 'STATUS']
-    } else if (type === 'customers') {
-      data = customers
-      filename = 'customers.csv'
-      headers = ['NAME', 'EMAIL', 'PHONE', 'ADDRESS', 'TRANSFERS']
-    }
-
-    // Convert to CSV
-    const csvContent = [
-      headers.join(','),
-      ...data.map(item => {
-        if (type === 'transfers') {
-          return `${item.wtn_number},${item.customer},${item.driver},${item.waste_type},${item.quantity} ${item.unit},${item.time},${item.status}`
-        } else if (type === 'drivers') {
-          return `${item.name},${item.email},${item.phone},${item.vehicle},${item.status}`
-        } else if (type === 'customers') {
-          return `${item.name},${item.email},${item.phone},${item.address},${item.total_transfers}`
-        }
-        return ''
-      })
-    ].join('\n')
-
-    // Download file
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
-  // Handle Filter
-  const handleFilter = () => {
-    setShowFilterModal(true)
-  }
-
-  const applyFilter = () => {
-    // Filter logic here
-    setShowFilterModal(false)
   }
 
   // Stats calculations
   const todayTransfers = transfers.filter(t => {
     const today = new Date().toDateString()
-    return new Date(t.date).toDateString() === today
+    return new Date(t.date || t.created_at).toDateString() === today
   }).length
 
   const totalTonnage = transfers.reduce((sum, t) => sum + (t.quantity || 0), 0).toFixed(0)
   const onlineDrivers = drivers.filter(d => d.status === 'online').length
-
-  // Filter transfers based on search text
-  const filteredTransfers = transfers.filter(t => 
-    t.customer?.toLowerCase().includes(filterText.toLowerCase()) ||
-    t.driver?.toLowerCase().includes(filterText.toLowerCase()) ||
-    t.wtn_number?.toLowerCase().includes(filterText.toLowerCase())
-  )
 
   if (loading) {
     return <div className="loading-spinner">Loading your data...</div>
@@ -667,7 +508,10 @@ function Dashboard({ session, onLogout }) {
             <span className="logo-icon">♻️</span>
             <h1>WasteTrack Pro</h1>
           </div>
-          <h2 className="company-name">{companyData.name}</h2>
+          <div className="company-info">
+            <h2 className="company-name">{companyData.name}</h2>
+            <p className="user-email">{session?.user?.email}</p>
+          </div>
         </div>
         <div className="header-right">
           <button className="notification-btn">🔔</button>
@@ -695,16 +539,10 @@ function Dashboard({ session, onLogout }) {
             todayTransfers={todayTransfers}
             totalTonnage={totalTonnage}
             onlineDrivers={onlineDrivers}
-            transfers={filteredTransfers}
+            transfers={transfers}
             drivers={drivers}
-            filterText={filterText}
-            setFilterText={setFilterText}
             onAddNew={() => openAddModal('transfer')}
             onDelete={(id) => handleDelete('transfer', id)}
-            onView={(item) => handleView('transfer', item)}
-            onEdit={(item) => handleEdit('transfer', item)}
-            onExport={() => handleExport('transfers')}
-            onFilter={handleFilter}
           />
         )}
 
@@ -713,10 +551,6 @@ function Dashboard({ session, onLogout }) {
             reports={reports}
             onAddNew={() => openAddModal('report')}
             onDelete={(id) => handleDelete('report', id)}
-            onView={(item) => handleView('report', item)}
-            onDownload={(item) => {
-              alert(`📥 Downloading ${item.name}`)
-            }}
           />
         )}
 
@@ -725,9 +559,6 @@ function Dashboard({ session, onLogout }) {
             drivers={drivers}
             onAddNew={() => openAddModal('driver')}
             onDelete={(id) => handleDelete('driver', id)}
-            onView={(item) => handleView('driver', item)}
-            onEdit={(item) => handleEdit('driver', item)}
-            onExport={() => handleExport('drivers')}
           />
         )}
 
@@ -736,16 +567,13 @@ function Dashboard({ session, onLogout }) {
             customers={customers}
             onAddNew={() => openAddModal('customer')}
             onDelete={(id) => handleDelete('customer', id)}
-            onView={(item) => handleView('customer', item)}
-            onEdit={(item) => handleEdit('customer', item)}
-            onExport={() => handleExport('customers')}
           />
         )}
 
         {activeTab === 'settings' && (
           <SettingsTab 
             companyData={companyData}
-            onEdit={() => handleEdit('company', companyData)}
+            onEdit={() => {}}
           />
         )}
       </div>
@@ -769,7 +597,6 @@ function Dashboard({ session, onLogout }) {
                       value={newTransfer.customer}
                       onChange={(e) => setNewTransfer({...newTransfer, customer: e.target.value})}
                       placeholder="e.g., ABC Construction Ltd"
-                      required
                     />
                   </div>
                   <div className="form-group">
@@ -779,7 +606,6 @@ function Dashboard({ session, onLogout }) {
                       value={newTransfer.driver}
                       onChange={(e) => setNewTransfer({...newTransfer, driver: e.target.value})}
                       placeholder="e.g., John Smith"
-                      required
                     />
                   </div>
                   <div className="form-group">
@@ -787,14 +613,11 @@ function Dashboard({ session, onLogout }) {
                     <select 
                       value={newTransfer.waste_type}
                       onChange={(e) => setNewTransfer({...newTransfer, waste_type: e.target.value})}
-                      required
                     >
-                      <option value="">Select waste type</option>
+                      <option value="">Select</option>
                       <option value="17.01.01 - Concrete">17.01.01 - Concrete</option>
                       <option value="17.09.04 - Construction Waste">17.09.04 - Construction Waste</option>
                       <option value="20.03.01 - Mixed Waste">20.03.01 - Mixed Waste</option>
-                      <option value="19.12.12 - Metal Scrap">19.12.12 - Metal Scrap</option>
-                      <option value="15.01.02 - Plastic Packaging">15.01.02 - Plastic Packaging</option>
                     </select>
                   </div>
                   <div className="form-row">
@@ -802,11 +625,9 @@ function Dashboard({ session, onLogout }) {
                       <label>Quantity *</label>
                       <input 
                         type="number" 
-                        step="0.1"
                         value={newTransfer.quantity}
                         onChange={(e) => setNewTransfer({...newTransfer, quantity: e.target.value})}
-                        placeholder="e.g., 8"
-                        required
+                        placeholder="8"
                       />
                     </div>
                     <div className="form-group half">
@@ -817,7 +638,6 @@ function Dashboard({ session, onLogout }) {
                       >
                         <option value="tonnes">tonnes</option>
                         <option value="kg">kg</option>
-                        <option value="cubic meters">cubic meters</option>
                       </select>
                     </div>
                   </div>
@@ -832,8 +652,7 @@ function Dashboard({ session, onLogout }) {
                       type="text" 
                       value={newDriver.name}
                       onChange={(e) => setNewDriver({...newDriver, name: e.target.value})}
-                      placeholder="e.g., John Smith"
-                      required
+                      placeholder="John Smith"
                     />
                   </div>
                   <div className="form-group">
@@ -860,7 +679,7 @@ function Dashboard({ session, onLogout }) {
                       type="text" 
                       value={newDriver.vehicle}
                       onChange={(e) => setNewDriver({...newDriver, vehicle: e.target.value})}
-                      placeholder="e.g., Truck 01"
+                      placeholder="Truck 01"
                     />
                   </div>
                 </div>
@@ -874,8 +693,7 @@ function Dashboard({ session, onLogout }) {
                       type="text" 
                       value={newCustomer.name}
                       onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-                      placeholder="e.g., ABC Construction Ltd"
-                      required
+                      placeholder="ABC Construction Ltd"
                     />
                   </div>
                   <div className="form-group">
@@ -902,7 +720,6 @@ function Dashboard({ session, onLogout }) {
                       value={newCustomer.address}
                       onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
                       placeholder="Full address"
-                      rows="3"
                     />
                   </div>
                 </div>
@@ -916,17 +733,7 @@ function Dashboard({ session, onLogout }) {
                       type="text" 
                       value={newReport.name}
                       onChange={(e) => setNewReport({...newReport, name: e.target.value})}
-                      placeholder="e.g., Monthly Compliance Report"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Date/Period</label>
-                    <input 
-                      type="text" 
-                      value={newReport.date}
-                      onChange={(e) => setNewReport({...newReport, date: e.target.value})}
-                      placeholder="e.g., March 2026"
+                      placeholder="Monthly Compliance Report"
                     />
                   </div>
                   <div className="form-row">
@@ -938,7 +745,6 @@ function Dashboard({ session, onLogout }) {
                       >
                         <option value="PDF">PDF</option>
                         <option value="Excel">Excel</option>
-                        <option value="CSV">CSV</option>
                       </select>
                     </div>
                     <div className="form-group half">
@@ -974,105 +780,12 @@ function Dashboard({ session, onLogout }) {
           </div>
         </div>
       )}
-
-      {/* View Modal */}
-      {showViewModal && selectedItem && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>View {modalType}</h3>
-              <button className="close-btn" onClick={() => setShowViewModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <pre className="view-content">
-                {JSON.stringify(selectedItem, null, 2)}
-              </pre>
-            </div>
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setShowViewModal(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {showEditModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Edit {modalType}</h3>
-              <button className="close-btn" onClick={() => setShowEditModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              {modalType === 'company' && (
-                <div className="form-container">
-                  <div className="form-group">
-                    <label>Company Name</label>
-                    <input 
-                      type="text" 
-                      value={editCompany.name}
-                      onChange={(e) => setEditCompany({...editCompany, name: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Phone Number</label>
-                    <input 
-                      type="text" 
-                      value={editCompany.phone}
-                      onChange={(e) => setEditCompany({...editCompany, phone: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Address</label>
-                    <textarea 
-                      value={editCompany.address}
-                      onChange={(e) => setEditCompany({...editCompany, address: e.target.value})}
-                      rows="3"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button className="save-btn" onClick={handleSaveEdit}>Save Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filter Modal */}
-      {showFilterModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Filter Transfers</h3>
-              <button className="close-btn" onClick={() => setShowFilterModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Search by Customer, Driver or WTN</label>
-                <input 
-                  type="text" 
-                  value={filterText}
-                  onChange={(e) => setFilterText(e.target.value)}
-                  placeholder="Type to filter..."
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setShowFilterModal(false)}>Cancel</button>
-              <button className="save-btn" onClick={applyFilter}>Apply Filter</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
-// 📊 OVERVIEW TAB
-function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, drivers, filterText, setFilterText, onAddNew, onDelete, onView, onEdit, onExport, onFilter }) {
+// ========== OVERVIEW TAB ==========
+function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, drivers, onAddNew, onDelete }) {
   return (
     <>
       <div className="content-header">
@@ -1089,15 +802,13 @@ function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, d
           <div className="stat-value">{todayTransfers || 0}</div>
           <div className="stat-sub">{onlineDrivers} active</div>
         </div>
-
         <div className="stat-card">
           <div className="stat-header">
             <span className="stat-label">Drivers Online</span>
           </div>
           <div className="stat-value">{onlineDrivers}</div>
-          <div className="stat-sub">{drivers.length} total drivers</div>
+          <div className="stat-sub">{drivers.length} total</div>
         </div>
-
         <div className="stat-card">
           <div className="stat-header">
             <span className="stat-label">Total Tonnage</span>
@@ -1105,10 +816,9 @@ function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, d
           <div className="stat-value">{totalTonnage || 0}</div>
           <div className="stat-sub">This month</div>
         </div>
-
         <div className="stat-card">
           <div className="stat-header">
-            <span className="stat-label">Compliance Status</span>
+            <span className="stat-label">Compliance</span>
           </div>
           <div className="stat-value status-ready">Ready</div>
           <div className="stat-sub">100%</div>
@@ -1117,13 +827,13 @@ function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, d
 
       <div className="compliance-banner">
         <div className="banner-content">
-          <h3>✅ October 2026 Ready</h3>
-          <p>All WTNs are being digitally submitted to the Environment Agency API. You're fully compliant with the new regulations.</p>
+          <h3>October 2026 Ready</h3>
+          <p>All WTNs digitally submitted to EA API. Fully compliant.</p>
         </div>
         <div className="compliance-checks">
-          <div className="check-item"><span className="check-icon">✓</span><span>API Connected</span></div>
-          <div className="check-item"><span className="check-icon">✓</span><span>Auto-Submission Active</span></div>
-          <div className="check-item"><span className="check-icon">✓</span><span>2-Year Records Stored</span></div>
+          <div className="check-item"><span className="check-icon">✓</span>API Connected</div>
+          <div className="check-item"><span className="check-icon">✓</span>Auto-Submission</div>
+          <div className="check-item"><span className="check-icon">✓</span>2-Year Records</div>
         </div>
       </div>
 
@@ -1131,19 +841,9 @@ function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, d
         <div className="section-header">
           <h3>Today's Waste Transfer Notes</h3>
           <div className="section-actions">
-            <button className="filter-btn" onClick={onFilter}>📊 Filter</button>
-            <button className="export-btn" onClick={onExport}>📎 Export</button>
+            <button className="filter-btn">📊 Filter</button>
+            <button className="export-btn">📎 Export</button>
           </div>
-        </div>
-
-        <div className="search-bar">
-          <input 
-            type="text" 
-            placeholder="Search transfers..." 
-            className="search-input"
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-          />
         </div>
 
         <div className="table-container">
@@ -1161,32 +861,24 @@ function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, d
               </tr>
             </thead>
             <tbody>
-              {transfers.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="empty-row">No transfers yet. Click "New Transfer" to add one.</td>
+              {transfers.map(t => (
+                <tr key={t.id}>
+                  <td><span className="wtn-number">{t.wtn_number}</span></td>
+                  <td>{t.customer}</td>
+                  <td>{t.driver}</td>
+                  <td>{t.waste_type}</td>
+                  <td>{t.quantity} {t.unit}</td>
+                  <td>{t.time}</td>
+                  <td>
+                    <span className={`status-badge ${t.status}`}>
+                      {t.status === 'completed' ? '✓' : '⏳'} {t.status}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="action-btn" onClick={() => onDelete(t.id)}>🗑️</button>
+                  </td>
                 </tr>
-              ) : (
-                transfers.map((transfer) => (
-                  <tr key={transfer.id}>
-                    <td><span className="wtn-number">{transfer.wtn_number}</span></td>
-                    <td>{transfer.customer}</td>
-                    <td>{transfer.driver}</td>
-                    <td><span className="waste-type">{transfer.waste_type}</span></td>
-                    <td>{transfer.quantity} {transfer.unit}</td>
-                    <td>{transfer.time}</td>
-                    <td>
-                      <span className={`status-badge ${transfer.status}`}>
-                        {transfer.status === 'completed' ? '✓ Completed' : '⏳ Pending'}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="action-btn" onClick={() => onView(transfer)}>👁️</button>
-                      <button className="action-btn" onClick={() => onEdit(transfer)}>✏️</button>
-                      <button className="action-btn" onClick={() => onDelete(transfer.id)}>🗑️</button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -1195,59 +887,49 @@ function OverviewTab({ todayTransfers, totalTonnage, onlineDrivers, transfers, d
   )
 }
 
-// 📋 REPORTS TAB
-function ReportsTab({ reports, onAddNew, onDelete, onView, onDownload }) {
+// ========== REPORTS TAB ==========
+function ReportsTab({ reports, onAddNew, onDelete }) {
   return (
     <div className="tab-content">
       <div className="content-header">
         <h2>Reports</h2>
         <button className="primary-btn" onClick={onAddNew}>+ Generate New Report</button>
       </div>
-
       <div className="reports-grid">
-        {reports.length === 0 ? (
-          <p className="empty-message">No reports yet. Generate your first report.</p>
-        ) : (
-          reports.map(report => (
-            <div key={report.id} className="report-card">
-              <div className="report-icon">📄</div>
-              <div className="report-details">
-                <h3>{report.name}</h3>
-                <p>{report.date}</p>
-                <span className={`report-status ${report.status}`}>{report.status}</span>
-              </div>
-              <div className="report-actions">
-                <button className="icon-btn" onClick={() => onDownload(report)}>📥</button>
-                <button className="icon-btn" onClick={() => onView(report)}>👁️</button>
-                <button className="icon-btn" onClick={() => onDelete(report.id)}>🗑️</button>
-              </div>
+        {reports.map(r => (
+          <div key={r.id} className="report-card">
+            <div className="report-icon">📄</div>
+            <div className="report-details">
+              <h3>{r.name}</h3>
+              <p>{r.date}</p>
+              <span className={`report-status ${r.status}`}>{r.status}</span>
             </div>
-          ))
-        )}
+            <div className="report-actions">
+              <button className="icon-btn">📥</button>
+              <button className="icon-btn" onClick={() => onDelete(r.id)}>🗑️</button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-// 🚚 DRIVERS TAB
-function DriversTab({ drivers, onAddNew, onDelete, onView, onEdit, onExport }) {
+// ========== DRIVERS TAB ==========
+function DriversTab({ drivers, onAddNew, onDelete }) {
   return (
     <div className="tab-content">
       <div className="content-header">
         <h2>Drivers</h2>
-        <div>
-          <button className="secondary-btn" onClick={onExport} style={{ marginRight: '10px' }}>📎 Export</button>
-          <button className="primary-btn" onClick={onAddNew}>+ Add New Driver</button>
-        </div>
+        <button className="primary-btn" onClick={onAddNew}>+ Add New Driver</button>
       </div>
-
       <div className="drivers-stats">
         <div className="mini-stat">
           <span className="mini-label">Total Drivers</span>
           <span className="mini-value">{drivers.length}</span>
         </div>
         <div className="mini-stat">
-          <span className="mini-label">Online Now</span>
+          <span className="mini-label">Online</span>
           <span className="mini-value success">{drivers.filter(d => d.status === 'online').length}</span>
         </div>
         <div className="mini-stat">
@@ -1255,168 +937,82 @@ function DriversTab({ drivers, onAddNew, onDelete, onView, onEdit, onExport }) {
           <span className="mini-value warning">{drivers.filter(d => d.status === 'offline').length}</span>
         </div>
       </div>
-
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Driver Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Vehicle</th>
-              <th>Status</th>
-              <th>Actions</th>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Vehicle</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {drivers.map(d => (
+            <tr key={d.id}>
+              <td><strong>{d.name}</strong></td>
+              <td>{d.email}</td>
+              <td>{d.phone}</td>
+              <td>{d.vehicle}</td>
+              <td><span className={`status-indicator ${d.status}`}>{d.status}</span></td>
+              <td><button className="action-btn" onClick={() => onDelete(d.id)}>🗑️</button></td>
             </tr>
-          </thead>
-          <tbody>
-            {drivers.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="empty-row">No drivers yet. Add your first driver.</td>
-              </tr>
-            ) : (
-              drivers.map(driver => (
-                <tr key={driver.id}>
-                  <td><strong>{driver.name}</strong></td>
-                  <td>{driver.email}</td>
-                  <td>{driver.phone}</td>
-                  <td>{driver.vehicle}</td>
-                  <td>
-                    <span className={`status-indicator ${driver.status}`}>
-                      {driver.status === 'online' ? '🟢 Online' : '⚪ Offline'}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="action-btn" onClick={() => onView(driver)}>👁️</button>
-                    <button className="action-btn" onClick={() => onEdit(driver)}>✏️</button>
-                    <button className="action-btn" onClick={() => onDelete(driver.id)}>🗑️</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
 
-// 👥 CUSTOMERS TAB
-function CustomersTab({ customers, onAddNew, onDelete, onView, onEdit, onExport }) {
-  // Remove duplicates based on name
-  const uniqueCustomers = customers.filter((customer, index, self) =>
-    index === self.findIndex((c) => c.name === customer.name)
-  )
-
+// ========== CUSTOMERS TAB ==========
+function CustomersTab({ customers, onAddNew, onDelete }) {
   return (
     <div className="tab-content">
       <div className="content-header">
         <h2>Customers</h2>
-        <div>
-          <button className="secondary-btn" onClick={onExport} style={{ marginRight: '10px' }}>📎 Export</button>
-          <button className="primary-btn" onClick={onAddNew}>+ Add New Customer</button>
-        </div>
+        <button className="primary-btn" onClick={onAddNew}>+ Add New Customer</button>
       </div>
-
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Company Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Transfers</th>
-              <th>Actions</th>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Transfers</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customers.map(c => (
+            <tr key={c.id}>
+              <td><strong>{c.name}</strong></td>
+              <td>{c.email}</td>
+              <td>{c.phone}</td>
+              <td>{c.address}</td>
+              <td>{c.total_transfers}</td>
+              <td><button className="action-btn" onClick={() => onDelete(c.id)}>🗑️</button></td>
             </tr>
-          </thead>
-          <tbody>
-            {uniqueCustomers.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="empty-row">No customers yet. Add your first customer.</td>
-              </tr>
-            ) : (
-              uniqueCustomers.map(customer => (
-                <tr key={customer.id}>
-                  <td><strong>{customer.name}</strong></td>
-                  <td>{customer.email}</td>
-                  <td>{customer.phone}</td>
-                  <td>{customer.address}</td>
-                  <td>{customer.total_transfers}</td>
-                  <td>
-                    <button className="action-btn" onClick={() => onView(customer)}>👁️</button>
-                    <button className="action-btn" onClick={() => onEdit(customer)}>✏️</button>
-                    <button className="action-btn" onClick={() => onDelete(customer.id)}>🗑️</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
 
-// ⚙️ SETTINGS TAB
-function SettingsTab({ companyData, onEdit }) {
+// ========== SETTINGS TAB ==========
+function SettingsTab({ companyData }) {
   return (
     <div className="tab-content">
       <h2>Settings</h2>
-
       <div className="settings-section">
-        <div className="section-header">
-          <h3>Company Profile</h3>
-          <button className="edit-btn" onClick={onEdit}>✏️ Edit</button>
-        </div>
+        <h3>Company Profile</h3>
         <div className="settings-form view-mode">
-          <div className="form-row">
-            <label>Company Name</label>
-            <div className="value-display">{companyData.name}</div>
-          </div>
-          <div className="form-row">
-            <label>Email Address</label>
-            <div className="value-display">{companyData.email}</div>
-          </div>
-          <div className="form-row">
-            <label>Phone Number</label>
-            <div className="value-display">{companyData.phone}</div>
-          </div>
-          <div className="form-row">
-            <label>Address</label>
-            <div className="value-display">{companyData.address}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="settings-section">
-        <h3>API Integration</h3>
-        <div className="api-status">
-          <div className="status-item">
-            <span className="status-label">Environment Agency API:</span>
-            <span className="status-badge success">Connected</span>
-          </div>
-          <div className="status-item">
-            <span className="status-label">Auto-submission:</span>
-            <span className="status-badge success">Active</span>
-          </div>
-          <div className="status-item">
-            <span className="status-label">Last Sync:</span>
-            <span className="status-text">18 Mar 2026, 14:32</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="settings-section">
-        <h3>Database Stats</h3>
-        <div className="api-status">
-          <div className="status-item">
-            <span className="status-label">Connected to:</span>
-            <span className="status-text">Supabase</span>
-          </div>
-          <div className="status-item">
-            <span className="status-label">Data Persistence:</span>
-            <span className="status-badge success">Active ✓</span>
-          </div>
+          <div className="form-row"><label>Company</label><div className="value-display">{companyData.name}</div></div>
+          <div className="form-row"><label>Email</label><div className="value-display">{companyData.email}</div></div>
+          <div className="form-row"><label>Phone</label><div className="value-display">{companyData.phone}</div></div>
+          <div className="form-row"><label>Address</label><div className="value-display">{companyData.address}</div></div>
         </div>
       </div>
     </div>
